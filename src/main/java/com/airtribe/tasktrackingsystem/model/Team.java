@@ -33,7 +33,7 @@ public class Team {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_id")
-    private User createdBy;
+    private Users createdBy;
 
     @CreatedDate
     @Column(name ="created_at", updatable = false)
@@ -49,7 +49,7 @@ public class Team {
             joinColumns = @JoinColumn(name = "team_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
-    private List<User> members = new ArrayList<>();
+    private List<Users> members = new ArrayList<>();
 
     @OneToMany(mappedBy = "team")
     private List<Task> tasks = new ArrayList<>();

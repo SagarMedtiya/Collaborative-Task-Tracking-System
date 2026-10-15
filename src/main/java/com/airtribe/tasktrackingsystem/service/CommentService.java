@@ -1,6 +1,8 @@
 package com.airtribe.tasktrackingsystem.service;
 
 import com.airtribe.tasktrackingsystem.dto.request.CommentRequest;
+import com.airtribe.tasktrackingsystem.dto.response.CommentResponse;
+import com.airtribe.tasktrackingsystem.exception.ResourceNotFoundException;
 import com.airtribe.tasktrackingsystem.model.Comment;
 import com.airtribe.tasktrackingsystem.model.Task;
 import com.airtribe.tasktrackingsystem.model.Users;
@@ -18,6 +20,7 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final TaskService taskService;
     private final UserService userService;
+    private final NotificationService notificationService;
 
     @Transactional
     public CommentResponse createComment(Long taskId, CommentRequest request, String username){
@@ -33,10 +36,18 @@ public class CommentService {
             comment.setParentComment(parentComment);
         }
         comment = commentRepository.save(comment);
+        notificationService.createAndSendNotification(
+                task.getCreatedBy(),
+                "COMMENT_ADDED",
+                "New Comment: "+ task.getTitle(),
+                "A new comment was added to your task",
+                "Comment",
+                comment.getId()
+        );
         return CommentResponse.from(comment);
     }
     public Page<CommentResponse> getCommentsByTask(Long taskId, Pageable pageable){
-        return commentRepository.findRootCommentByTaskId(taskId, Pageable)
+        return commentRepository.findRootCommentsByTaskId(taskId, pageable)
                 .map(CommentResponse::from);
     }
     @Transactional
@@ -44,9 +55,9 @@ public class CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Comment not found"));
 
-        Users user = userService.getEntityBYUsername(username);
-        if(!comment.getUser.getId.equals(user.getId())){
-            throw new RuntimeException("You can only update you own commnets");
+        Users user = userService.getEntityByUsername(username);
+        if(!comment.getUser().getId().equals(user.getId())){
+            throw new RuntimeException("You can only update your own comments");
         }
         comment.setContent(request.getContent());
         comment = commentRepository.save(comment);
@@ -55,10 +66,10 @@ public class CommentService {
     @Transactional
     public void deleteComment(Long commentId, String username){
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Comment not ffound"));
+                .orElseThrow(() -> new ResourceNotFoundException("Comment not found"));
         Users user = userService.getEntityByUsername(username);
         if(!comment.getUser().getId().equals(user.getId())){
-            throw new RuntimeException("You can only delete you own commnets");
+            throw new RuntimeException("You can only delete your own comments");
         }
         commentRepository.delete(comment);
     }

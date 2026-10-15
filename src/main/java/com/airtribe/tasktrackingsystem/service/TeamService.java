@@ -1,12 +1,15 @@
 package com.airtribe.tasktrackingsystem.service;
 
 import com.airtribe.tasktrackingsystem.dto.request.TeamRequest;
+import com.airtribe.tasktrackingsystem.dto.response.TeamResponse;
+import com.airtribe.tasktrackingsystem.exception.ResourceNotFoundException;
 import com.airtribe.tasktrackingsystem.model.Team;
 import com.airtribe.tasktrackingsystem.model.Users;
 import com.airtribe.tasktrackingsystem.repository.TeamRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -47,8 +50,12 @@ private final UserService userService;
     return TeamResponse.from(team);
     }
     public Page<TeamResponse> getTeamsById(Long userId, Pageable pageable){
-        return teamRespository.findByMembersId(userId, pageable)
-                .map(TeamResponse::from)
+        return teamRepository.findByMembersId(userId, pageable)
+                .map(TeamResponse::from);
+    }
+    public Page<TeamResponse> getTeamsByUser(Long userId, Pageable pageable){
+        return teamRepository.findByMembersId(userId, pageable)
+                .map(TeamResponse::from);
     }
     public TeamResponse getTeamById(Long id){
         Team team = teamRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Team not found with id:" + id));
@@ -90,7 +97,7 @@ private final UserService userService;
         return TeamResponse.from(team);
     }
     @Transactional
-    public TeamResponse removeMemberfromTeam(Long teamId, Long userId){
+    public TeamResponse removeMemberFromTeam(Long teamId, Long userId){
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new ResourceNotFoundException("Team not found with id:" + teamId));
         Users user = userService.getEntityById(userId);

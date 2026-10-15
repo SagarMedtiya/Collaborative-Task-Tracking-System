@@ -2,9 +2,12 @@ package com.airtribe.tasktrackingsystem.controller;
 
 import com.airtribe.tasktrackingsystem.dto.request.TaskRequest;
 import com.airtribe.tasktrackingsystem.dto.response.TaskResponse;
+import com.airtribe.tasktrackingsystem.model.Task;
 import com.airtribe.tasktrackingsystem.service.TaskService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -15,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 public class TaskController {
     private final TaskService  taskService;
     @PostMapping
-    public ResponseEntity<Task> createTask(@Valid @RequestBody TaskRequest request,
+    public ResponseEntity<TaskResponse> createTask(@Valid @RequestBody TaskRequest request,
                                            Authentication authentication) {
         return ResponseEntity.ok(taskService.createTask(request, authentication.getName()));
     }
@@ -26,7 +29,7 @@ public class TaskController {
             @RequestParam(required = false) String sortBy,
             Pageable pageable,
             Authentication authentication){
-        return ResponseEntity.ok(taskService.getTask(status, search, sortBy, pageable, authentication.getName));
+        return ResponseEntity.ok(taskService.getTasks(status, search, sortBy, pageable, authentication.getName()));
     }
 
     @PutMapping("/{id}")

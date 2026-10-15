@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.tomcat.util.http.parser.Priority;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -17,6 +16,7 @@ import java.util.List;
 @Entity
 @Table(name = "tasks")
 @Data
+
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -46,7 +46,7 @@ public class Task {
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_id")
     private Users createdBy;
 

@@ -38,7 +38,11 @@ public class Attachments {
     @JoinColumn(name = "uploaded_by_id")
     private Users uploadedBy;
 
+
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "task_id", nullable = false)
+    private Task task;
 }

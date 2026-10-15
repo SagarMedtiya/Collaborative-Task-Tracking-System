@@ -2,6 +2,7 @@ package com.airtribe.tasktrackingsystem.service;
 
 import com.airtribe.tasktrackingsystem.dto.request.TaskRequest;
 import com.airtribe.tasktrackingsystem.dto.response.TaskResponse;
+import com.airtribe.tasktrackingsystem.exception.ResourceNotFoundException;
 import com.airtribe.tasktrackingsystem.model.Task;
 import com.airtribe.tasktrackingsystem.model.Team;
 import com.airtribe.tasktrackingsystem.model.Users;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.context.ApplicationEventPublisher;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +25,9 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final UserService userService;
     private final TeamService teamService;
+
+    private final ApplicationEventPublisher eventPublisher;
+    private final NotificationService notificationService;
 
     @Transactional
     public TaskResponse createTask(TaskRequest request, String username){
@@ -52,10 +57,10 @@ public class TaskService {
                                        Pageable pageable, String username) {
         Users user = userService.getEntityByUsername(username);
 
-        Status taskStatus = null;
+        Task.Status taskStatus = null;
         if (status != null && !status.isEmpty()) {
             try {
-                taskStatus = Status.valueOf(status.toUpperCase());
+                taskStatus = Task.Status.valueOf(status.toUpperCase());
             } catch (IllegalArgumentException e) {
                 // Invalid status, ignore
             }
@@ -94,7 +99,7 @@ public class TaskService {
             }
         }
     }
-    public TaskResponse getTaskById(Long id, TaskRequest request){
+    public TaskResponse getTaskById(Long id){
         Task task = taskRepository.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("Task not found with id: "+ id));
         return TaskResponse.from(task);
@@ -110,9 +115,9 @@ public class TaskService {
             task.setDescription(request.getDescription());
         }
         if(request.getStatus()!= null){
-            Status oldStatus = task.getStatus();
+            Task.Status oldStatus = task.getStatus();
             task.setStatus(request.getStatus());
-            if(request.getStatus() == Status.COMPLETED && oldStatus != Task.Status.COMPLETED){
+            if(request.getStatus() == Task.Status.COMPLETED && oldStatus != Task.Status.COMPLETED){
                 task.setCompletedAt(LocalDateTime.now());
             }
         }
@@ -131,6 +136,16 @@ public class TaskService {
             task.setTeam(team);
         }
         task = taskRepository.save(task);
+        if(task.getAssignedTo() != null){
+            notificationService.createAndSendNotification(
+                    task.getAssignedTo(),
+                    "TASK_UPDATED",
+                    "Task Updated: "+ task.getTitle(),
+                    "A task you're assigned to has been updated",
+                    "Task",
+                    task.getId()
+            );
+        }
         return TaskResponse.from(task);
     }
     @Transactional
@@ -145,8 +160,16 @@ public class TaskService {
     public TaskResponse completeTask(Long id){
         Task task = taskRepository.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("Task not found with id: "+ id));
-        task.setStatus(Status.COMPLETED);
+        task.setStatus(Task.Status.COMPLETED);
         task.setCompletedAt(LocalDateTime.now());
+        notificationService.createAndSendNotification(
+                task.getCreatedBy(),
+                "TASK_COMPLETED",
+                "Task Completed: " + task.getTitle(),
+                task.getTitle() + " has been completed",
+                "Task",
+                task.getId()
+        );
         task = taskRepository.save(task);
         return TaskResponse.from(task);
     }
@@ -157,16 +180,29 @@ public class TaskService {
 
         Users assignedTo = userService.getEntityById(userId);
         task.setAssignedTo(assignedTo);
+        if(task.getAssignedTo() != null){
+            notificationService.createAndSendNotification(
+                    task.getAssignedTo(),
+                    "TASK_ASSIGNED",
+                    "Task Assigned: " + task.getTitle(),
+                    "You have been assigned a new task: " + task.getTitle(),
+                    "Task",
+                    task.getId()
+            );
+        }
+
         task = taskRepository.save(task);
         return TaskResponse.from(task);
     }
 
     public List<Task> getOverdueTasks() {
-        return taskRepository.findByDueDateBeforeAndStatusNot(LocalDateTime.now(), Status.COMPLETED);
+        return taskRepository.findByDueDateBeforeAndStatusNot(LocalDateTime.now(), Task.Status.COMPLETED);
     }
 
     public Task getEntityById(Long id) {
         return taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + id));
     }
+
+
 }

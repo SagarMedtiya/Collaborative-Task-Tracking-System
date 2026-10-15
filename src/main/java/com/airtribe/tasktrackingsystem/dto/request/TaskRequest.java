@@ -1,5 +1,6 @@
 package com.airtribe.tasktrackingsystem.dto.request;
 
+import com.airtribe.tasktrackingsystem.model.Task;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -22,9 +23,9 @@ public class TaskRequest {
     @Size(max = 2000, message = "Description cannot exceed 2000 characters")
     private String description;
 
-    private Status status;
+    private Task.Status status;
 
-    private Priority priority;
+    private Task.Priority priority;
 
     @Future(message = "Due date must be in the future")
     private LocalDateTime dueDate;

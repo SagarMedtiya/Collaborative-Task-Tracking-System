@@ -40,6 +40,17 @@ public class UserResponse {
                 .updatedAt(users.getUpdatedAt())
                 .build();
     }
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Data
+    public static class UserSummary {
+        private Long id;
+        private String username;
+        private String email;
+
+
+    }
 }
 
 

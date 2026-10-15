@@ -1,5 +1,7 @@
 package com.airtribe.tasktrackingsystem.config;
 
+import com.airtribe.tasktrackingsystem.security.JwtAuthenticationFilter;
+import com.airtribe.tasktrackingsystem.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,7 +19,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import java.util.Arrays;
 
 @Configuration
@@ -49,6 +51,7 @@ public class SecurityConfig {
     public DaoAuthenticationProvider authenticationProvider(){
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
     @Bean

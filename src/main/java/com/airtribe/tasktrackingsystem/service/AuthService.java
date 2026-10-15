@@ -3,6 +3,7 @@ package com.airtribe.tasktrackingsystem.service;
 import com.airtribe.tasktrackingsystem.dto.request.AuthRequest;
 import com.airtribe.tasktrackingsystem.dto.request.RegisterRequest;
 import com.airtribe.tasktrackingsystem.dto.response.AuthResponse;
+import com.airtribe.tasktrackingsystem.exception.AuthenticationException;
 import com.airtribe.tasktrackingsystem.model.Users;
 import com.airtribe.tasktrackingsystem.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -10,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,7 +25,7 @@ public class AuthService {
     private final JwtService jwtService;
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        //validate if uswername or email already exists
+        //validate if username or email already exists
         if(userRepository.existsByUsername(request.getUsername())) {
             throw new AuthenticationException("Username is already taken");
         }
@@ -44,7 +44,7 @@ public class AuthService {
                 .build();
         user = userRepository.save(user);
 
-        //Genrate token
+        //Generate token
         UserDetails userDetails = new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
                 user.getPassword(),
@@ -66,7 +66,7 @@ public class AuthService {
                     new UsernamePasswordAuthenticationToken(request.getUsernameOrEmail(), request.getPassword())
             );
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            Users user = userRepository.findByUsernameOrEmail(request.getUsernameOrEmail(), request.getUsernameOrEmail())
+            Users user = userRepository.findByusernameOrEmail(request.getUsernameOrEmail(), request.getUsernameOrEmail())
                     .orElseThrow(()-> new AuthenticationException("User not found"));
 
             String token = jwtService.generateToken(userDetails);
